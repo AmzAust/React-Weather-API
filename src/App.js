@@ -1,32 +1,64 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./App.css";
 import WeatherCard from "./components/WeatherCard/component";
+import { useState } from "react";
 
 function App() {
-  const data = async () => {
+  const [query, setQuery] = useState("Cleveland", "US");
+  const [weather, setWeather] = useState({
+    temp: null,
+    city: null,
+    condition: null,
+    country: null,
+  });
+
+  const data = async (q) => {
     const apiRes = await fetch(
-      "https://api.openweathermap.org/data/2.5/weather?q=London,uk&units=metric&APPID=643f0ce9baa28ce8b2397f81ef1c7e20"
+      `https://api.openweathermap.org/data/2.5/weather?q=${q}&units=metric&APPID=643f0ce9baa28ce8b2397f81ef1c7e20`
     );
     const resJson = await apiRes.json();
     return resJson;
   };
-  data().then((res) => {
-    console.log("The temperature is: " + res.main.temp);
-  });
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    data(query).then((res) => {
+      setWeather({
+        temp: res.main.temp,
+        city: res.name,
+        condition: res.weather[0].main,
+        country: res.sys.country,
+      });
+    });
+  };
+
+  useEffect(() => {
+    data(query).then((res) => {
+      setWeather({
+        temp: res.main.temp,
+        city: res.name,
+        condition: res.weather[0].main,
+        country: res.sys.country,
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="App">
       <WeatherCard
-        temp={20}
-        condition="Clear"
-        city="Sydney"
-        country="AU"
+        temp={weather.temp}
+        condition={weather.condition}
+        city={weather.city}
+        country={weather.country}
       ></WeatherCard>
-      <WeatherCard
-        temp={0}
-        condition="Tornado"
-        city="Cleveland"
-        country="US"
-      ></WeatherCard>
+      <form>
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+        <button onClick={(event) => handleSearch(event)}>Search</button>
+      </form>
     </div>
   );
 }
